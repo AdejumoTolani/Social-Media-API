@@ -4,20 +4,31 @@ const {
     getPosts, 
     createPost, 
     deletePost, 
-    likeUnlikePost 
+    likeUnlikePost,
+    currentUserPosts,
+    getLikedUnlikedPost,
+    commentOnPost
 } = require("../Controllers/post");
+const { checkUser } = require("../middleware/authMiddleware");
 
 router
     .route("/")
-    .get(getPosts)
-    .post(createPost);
+    .get(checkUser, getPosts)
+    .post(checkUser, createPost);
+
+
+router
+    .route('/me')
+    .get(checkUser,currentUserPosts)
 
 router
     .route("/:id")
-    .delete(deletePost);
+    .delete(deletePost)
+    .get(checkUser, getLikedUnlikedPost)
+    .post(checkUser, commentOnPost)
 
 router
     .route('/:id/like')
-    .put(likeUnlikePost)
+    .put(checkUser,likeUnlikePost)
 
 module.exports = router;

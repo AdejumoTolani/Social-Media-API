@@ -1,23 +1,29 @@
 const router = require('express').Router();
-
+const { checkUser } = require('../middleware/authMiddleware')
 
 const {
     updateUser,
     deleteUser,
     searchUser,
-    followUnfollowUser
+    followUnfollowUser,
+    currentUser,
+    // getUser
 } = require('../Controllers/user')
 
 router
     .route("/:id")
     .put(updateUser)
-    .delete(deleteUser);
+    .delete(deleteUser)
+    .get(checkUser, searchUser)
 
 router
     .route('/')
-    .get(searchUser)
+    .get(checkUser, currentUser)
+    
     
 router
     .route('/:id/follow')
     .put(followUnfollowUser)
+
+
 module.exports = router

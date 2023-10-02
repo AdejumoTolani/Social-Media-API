@@ -1,8 +1,10 @@
 const User = require("../Models/User");
+const Post = require('../Models/Post')
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 
 //Update a user.
+
 exports.updateUser = async (req, res) => {
   if (req.body.userId === req.params.id) {
     if (req.body.password) {
@@ -44,9 +46,34 @@ exports.deleteUser = async (req, res) => {
 //Search a certain user
 exports.searchUser = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.body.username });
+    // console.log(req.params.id)
+    username = req.params.id
+    const user = await User.findOne({ username: username });
     const { password, updatedAt, createdAt, ...details } = user._doc;
-    res.status(200).json(details);
+
+
+        const posts = await Post.find({ userId: user._doc._id })
+          .sort({ createdAt: -1 })
+          .populate({
+            path: "comments",
+            populate: {
+              path: "userId",
+            },
+          })
+          .populate("userId");
+    // console.log(details)
+    // const posts = await Post.find({userId:user._doc._id});
+    let arr = []
+    posts.forEach(post=>{
+      // let arr = []
+      if(post.likes.includes(req.user._id)){
+        arr.push([post, {liked:true}])
+      }else{
+        arr.push([post, { liked: false}]);
+      }
+    })
+    // console.log(posts)
+    res.status(200).json({details, arr});
   } catch (err) {
     console.log(err);
   }
@@ -67,11 +94,37 @@ exports.followUnfollowUser = async (req, res) => {
       await currentUser.updateOne({ $push: { follows: req.params.id } });
       res.status(200).json("User followed.");
     } else {
-      await userToActOn.updateOne({$pull : {followedBy : req.body.userId}});
-      await currentUser.updateOne({$pull : { follows : req.params.id}})
+      await userToActOn.updateOne({ $pull: { followedBy: req.body.userId } });
+      await currentUser.updateOne({ $pull: { follows: req.params.id } });
       res.status(200).json("User unfollowed.");
     }
   } catch (err) {
     console.log(err);
   }
 };
+
+
+exports.currentUser = async (req, res) => {
+
+    try{
+    const user = req.user;
+    res.status(200).json({ user });
+
+    }catch(err){
+      console.log(err)
+    }
+}
+
+exports.getUser = async (req, res)=> {
+
+
+  try{
+    const userId = req.params.user
+    const user = User.find({username:userId});
+    res.status(200).json({user:user})
+    
+
+  }catch(err){
+    res.status(500).send(err)
+  }
+}
